@@ -7,9 +7,10 @@ from ROOT import gROOT
 from ROOT import gSystem
 from ROOT import gInterpreter
 
+# TODO depending on env vars is bad...
+# using yaml or json..?
 from lib_utils import load_fastjet
 from lib_utils import load_delphes
-
 load_fastjet()
 load_delphes()
 
@@ -62,6 +63,8 @@ class FastJetHelper(object):
     def _reassign_cluster_seq(self):
         gROOT.ProcessLine("cluster_seq = fastjet::ClusterSequence(particles, definition)")
 
+    def __str__(self):
+        return self._definition.description()
 
     def cluster_from_tree(self, tree, entry=None):
         if entry is not None:
@@ -76,6 +79,8 @@ class FastJetHelper(object):
         self._reassign_cluster_seq()
         jets = fastjet.sorted_by_pt(self._cluster_seq.inclusive_jets())
         return jets
+
+    # TODO removes all trace like so file and include path when call __del__
 
 
 if __name__ == "__main__":
@@ -92,3 +97,6 @@ if __name__ == "__main__":
 
     helper.radius = 0.5
     jets = helper.cluster_from_tree(tree, 2)
+
+    for each in jets[0].constituents():
+        print(each)
