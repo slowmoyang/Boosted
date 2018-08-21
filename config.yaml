@@ -1,0 +1,2 @@
+fastjet: './tools/fastjet-install'
+delphes: './tools/Delphes-3.4.1'
