@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+JOBS=${1:-4}
+DOWNLOAD_DIR=${2:-"/tmp"}
+VERSION=${3:-"3.4.1"}
+
+WORKING_DIR=$PWD
+
+wget http://cp3.irmp.ucl.ac.be/downloads/Delphes-${VERSION}.tar.gz -P ${DOWNLOAD_DIR}
+tar zxvf ${DOWNLOAD_DIR}/Delphes-${VERSION}.tar.gz
+cd Delphes-${VERSION}
+make -j${JOBS}
+cd ${WORKING_DIR}
+

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+JOBS=${1:-4}
+VERSION=${2:-"3.3.1"}
+DOWNLOAD_DIR=${3:-"/tmp"}
+
+WORKING_DIR=$PWD
+
+wget http://fastjet.fr/repo/fastjet-${VERSION}.tar.gz -P ${DOWNLOAD_DIR}
+tar zxvf ${DOWNLOAD_DIR}/fastjet-${VERSION}.tar.gz
+cd fastjet-${VERSION}/
+./configure --prefix=${WORKING_DIR}/tools/fastjet-install
+make -j${JOBS}
+make check
+make install
+cd ${WORKING_DIR}
