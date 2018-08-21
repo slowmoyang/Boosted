@@ -78,6 +78,21 @@ class EasyJet(object):
         jets = fastjet.sorted_by_pt(self._cluster_seq.inclusive_jets())
         return jets
 
+    def cluster_from_jet(self, jet):
+        """cluster jets from constituents from a 'Jet' instance
+        Args:
+          jet: An instance of 'Jet'
+        """
+        self._particles.clear()
+
+        for each in jet.Constituents:
+            p4 = each.P4()
+            particle = fastjet.PseudoJet(p4.X(), p4.Y(), p4.Z(), p4.E())
+            self._particles.push_back(particle)
+        self._reassign_cluster_seq()
+        jets = fastjet.sorted_by_pt(self._cluster_seq.inclusive_jets())
+        return jets
+
     # TODO remove all trace like so file and include path when call __del__
     # or use global variable to count and indicate # of instance of EasyJet,
     # and then use the suffix of variable name like particles_<index>
