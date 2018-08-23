@@ -15,20 +15,35 @@ load_delphes()
 from ROOT import fastjet
 
 
+_INSTANCE_COUNT = 0
+
+
 class EasyJet(object):
     def __init__(self,
                  algorithm="antikt_algorithm",
                  radius=0.4):
+        global _INSTANCE_COUNT
+        _INSTANCE_COUNT += 1
+        self._instance_count = _INSTANCE_COUNT
 
-        gROOT.ProcessLine("std::vector<fastjet::PseudoJet> particles;")
-        gROOT.ProcessLine("fastjet::JetDefinition definition(fastjet::{algorithm}, {radius})".format(
+        self._particles_name = "particles_{:d}".format(self._instance_count)
+        self._definition_name = "definition_{:d}".format(self._instance_count)
+        self._cluster_seq_name = "cluster_seq_{:d}".format(self._instance_count)
+
+        gROOT.ProcessLine("std::vector<fastjet::PseudoJet> {name};".format(
+            name=self._particles_name))
+        gROOT.ProcessLine("fastjet::JetDefinition {name}(fastjet::{algorithm}, {radius});".format(
+            name=self._definition_name,
             algorithm=algorithm,
             radius=radius))
-        gROOT.ProcessLine("fastjet::ClusterSequence cluster_seq(particles, definition)")
+        gROOT.ProcessLine("fastjet::ClusterSequence {cluster_seq_name}({particles_name}, {definition_name})".format(
+            cluster_seq_name=self._cluster_seq_name,
+            particles_name=self._particles_name,
+            definition_name=self._definition_name))
 
-        self._particles = getattr(ROOT, "particles")
-        self._definition = getattr(ROOT, "definition")
-        self._cluster_seq = getattr(ROOT, "cluster_seq")
+        self._particles = getattr(ROOT, self._particles_name)
+        self._definition = getattr(ROOT, self._definition_name)
+        self._cluster_seq = getattr(ROOT, self._cluster_seq_name)
 
         self._algorithm = algorithm
         self._radius = radius
@@ -40,8 +55,8 @@ class EasyJet(object):
     @algorithm.setter
     def algorithm(self, algorithm_):
         self._algoritmh = algorithm_ 
-        self._reassign_definition()
-        self._reassign_cluster_seq()
+        self._assign_definition()
+        self._assign_cluster_seq()
 
     @property
     def radius(self):
@@ -50,19 +65,23 @@ class EasyJet(object):
     @radius.setter
     def radius(self, radius_):
         self._radius = radius_ 
-        self._reassign_definition()
-        self._reassign_cluster_seq()
+        self._assign_definition()
+        self._assign_cluster_seq()
 
-    def _reassign_definition(self): 
-        gROOT.ProcessLine("definition = fastjet::JetDefinition(fastjet::{algorithm}, {radius})".format(
+    def _assign_definition(self): 
+        gROOT.ProcessLine("{name} = fastjet::JetDefinition(fastjet::{algorithm}, {radius})".format(
+            name=self._definition_name,
             algorithm=self._algorithm,
             radius=self._radius))
 
-    def _reassign_cluster_seq(self):
-        gROOT.ProcessLine("cluster_seq = fastjet::ClusterSequence(particles, definition)")
+    def _assign_cluster_seq(self):
+        gROOT.ProcessLine("{cluster_seq_name} = fastjet::ClusterSequence({particles_name}, {definition_name})".format(
+            cluster_seq_name=self._cluster_seq_name,
+            particles_name=self._particles_name,
+            definition_name=self._definition_name))
 
     def __str__(self):
-        return self._definition.description()
+        return self._definition.description() + " (Instance count: {:d})".format(self._instance_count)
 
     def cluster_from_tree(self, tree, entry=None):
         if entry is not None:
@@ -74,7 +93,7 @@ class EasyJet(object):
                 p4 = each.P4()
                 particle = fastjet.PseudoJet(p4.X(), p4.Y(), p4.Z(), p4.E())
                 self._particles.push_back(particle)
-        self._reassign_cluster_seq()
+        self._assign_cluster_seq()
         jets = fastjet.sorted_by_pt(self._cluster_seq.inclusive_jets())
         return jets
 
@@ -89,7 +108,7 @@ class EasyJet(object):
             p4 = each.P4()
             particle = fastjet.PseudoJet(p4.X(), p4.Y(), p4.Z(), p4.E())
             self._particles.push_back(particle)
-        self._reassign_cluster_seq()
+        self._assign_cluster_seq()
         jets = fastjet.sorted_by_pt(self._cluster_seq.inclusive_jets())
         return jets
 
